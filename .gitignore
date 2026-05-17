@@ -1,0 +1,10 @@
+# Compiled binaries
+DijkstraAlgorithm/traffic_analysis
+TrafficGUI/traffic_gui
+
+# Object files
+TrafficGUI/*.o
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
