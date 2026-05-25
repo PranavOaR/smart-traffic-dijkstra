@@ -53,16 +53,29 @@ static float tw(const char *s, float sz)
     return MeasureTextEx(F, s, sz, 1).x;
 }
 
+typedef enum {
+    SELECT_SOURCE,
+    SELECT_DESTINATION
+} SelectMode;
+
 /* ── UI helpers ──────────────────────────────────────── */
 
-static bool ui_button(Rectangle r, const char *label)
+static bool ui_button_ex(Rectangle r, const char *label, bool active)
 {
     bool hot = CheckCollisionPointRec(GetMousePosition(), r);
-    DrawRectangleRec(r, hot ? (Color){60,100,200,255} : (Color){35,55,110,255});
-    DrawRectangleLinesEx(r, 1, (Color){80,130,255,255});
+    Color fill = active ? (Color){70,120,210,255} :
+                 hot    ? (Color){60,100,200,255} :
+                          (Color){35,55,110,255};
+    DrawRectangleRec(r, fill);
+    DrawRectangleLinesEx(r, active ? 2 : 1, (Color){80,130,255,255});
     float lw = tw(label, 15);
     txt(label, r.x + (r.width - lw)/2, r.y + (r.height - 15)/2, 15, WHITE);
     return hot && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+static bool ui_button(Rectangle r, const char *label)
+{
+    return ui_button_ex(r, label, false);
 }
 
 /* Draw directed arrow between node circle edges. */
@@ -134,6 +147,7 @@ void run_gui(Graph *g)
     int  path[MAX_NODES], path_len = 0;
     bool has_path = false;
     int  cached_src = -2;
+    SelectMode select_mode = SELECT_SOURCE;
     DijkstraResult res, all_res;
 
     load_demo_map(g);
@@ -146,10 +160,16 @@ void run_gui(Graph *g)
             int hit = hit_node(m, g->num_nodes);
             if (hit >= 0) {
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    src = hit; has_path = false; path_len = 0;
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-                    dst = hit; has_path = false; path_len = 0;
+                    if (select_mode == SELECT_SOURCE) {
+                        src = hit;
+                        if (dst == src) dst = -1;
+                        select_mode = SELECT_DESTINATION;
+                    } else {
+                        dst = hit;
+                        if (src == dst) src = -1;
+                    }
+                    has_path = false;
+                    path_len = 0;
                 }
             }
         }
@@ -208,8 +228,18 @@ void run_gui(Graph *g)
         txt("Dijkstra  |  Min-Heap",   panX, panY+26, 13, (Color){100,120,160,255});
         panY += 64;
 
-        txt("Left-click  =  source",      panX, panY,    14, TEXT_C); panY += 20;
-        txt("Right-click  =  destination",panX, panY,    14, TEXT_C); panY += 28;
+        txt("Select Mode", panX, panY, 13, TEXT_C); panY += 20;
+        if (ui_button_ex((Rectangle){panX,(float)panY, 132,34}, "Source",
+                         select_mode == SELECT_SOURCE)) {
+            select_mode = SELECT_SOURCE;
+        }
+        if (ui_button_ex((Rectangle){panX+146,(float)panY, 132,34}, "Destination",
+                         select_mode == SELECT_DESTINATION)) {
+            select_mode = SELECT_DESTINATION;
+        }
+        panY += 44;
+        txt("Click any node to set the active selection.", panX, panY, 12,
+            (Color){120,140,180,255}); panY += 24;
         DrawLine(PANEL_X+8, (int)panY, WIN_W-8, (int)panY, LINE_C); panY += 12;
 
         txt("Source",      panX, panY, 13, (Color){80,200,110,255}); panY += 20;
@@ -240,10 +270,12 @@ void run_gui(Graph *g)
 
         if (ui_button((Rectangle){panX,(float)panY, 278,36}, "Load Demo Map")) {
             load_demo_map(g); src=dst=-1; has_path=false; path_len=0; cached_src=-2;
+            select_mode = SELECT_SOURCE;
         }
         panY += 46;
         if (ui_button((Rectangle){panX,(float)panY, 278,36}, "Clear Selection")) {
             src=dst=-1; has_path=false; path_len=0;
+            select_mode = SELECT_SOURCE;
         }
         panY += 48;
 
