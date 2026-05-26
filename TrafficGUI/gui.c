@@ -35,6 +35,7 @@ static const Color LINE_C = { 60, 80, 130,  255};
 
 /* ── Font helpers ─────────────────────────────────────── */
 static Font F;    /* loaded in run_gui; used by all text calls */
+static bool custom_font_loaded = false;
 
 static void txt(const char *s, float x, float y, float sz, Color c)
 {
@@ -136,12 +137,19 @@ static int hit_node(Vector2 m, int n)
 /* ── Main loop ────────────────────────────────────────── */
 void run_gui(Graph *g)
 {
-    InitWindow(WIN_W, WIN_H, "Smart Traffic Analysis — Dijkstra");
+    InitWindow(WIN_W, WIN_H, "Smart Traffic Analysis - Dijkstra");
     SetTargetFPS(60);
 
-    /* Load San Francisco (macOS system font) for clean anti-aliased text. */
-    F = LoadFontEx("/System/Library/Fonts/SFNS.ttf", 48, NULL, 0);
-    SetTextureFilter(F.texture, TEXTURE_FILTER_BILINEAR);
+    F = GetFontDefault();
+#ifdef __APPLE__
+    /* Use the macOS system font when present; other platforms use raylib's default font. */
+    Font mac_font = LoadFontEx("/System/Library/Fonts/SFNS.ttf", 48, NULL, 0);
+    if (mac_font.texture.id != 0) {
+        F = mac_font;
+        custom_font_loaded = true;
+        SetTextureFilter(F.texture, TEXTURE_FILTER_BILINEAR);
+    }
+#endif
 
     int  src = -1, dst = -1;
     int  path[MAX_NODES], path_len = 0;
@@ -254,7 +262,7 @@ void run_gui(Graph *g)
             for (int k = 0; k < path_len; k++) {
                 char line[60];
                 snprintf(line, sizeof(line), "%s%s",
-                    g->nodes[path[k]].name, k < path_len-1 ? "  →" : "");
+                    g->nodes[path[k]].name, k < path_len-1 ? "  ->" : "");
                 txt(line, panX+6, panY, 13, WHITE); panY += 18;
             }
             char wl[32]; snprintf(wl, sizeof(wl), "Total weight:  %d", res.dist[dst]);
@@ -302,7 +310,7 @@ void run_gui(Graph *g)
         EndDrawing();
     }
 
-    UnloadFont(F);
+    if (custom_font_loaded) UnloadFont(F);
     free_graph(g);
     CloseWindow();
 }
