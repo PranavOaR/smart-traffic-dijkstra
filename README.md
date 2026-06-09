@@ -174,13 +174,13 @@ MiniProject/
 
 ## Build & Run
 
-### Prerequisites
+### macOS Prerequisites
 
 - macOS (Apple Silicon or Intel)
 - `gcc`
 - Raylib 5.x — install with: `brew install raylib`
 
-### GUI version
+### macOS GUI version
 
 ```bash
 cd TrafficGUI
@@ -188,12 +188,62 @@ make
 ./traffic_gui
 ```
 
+### Windows Prerequisites
+
+For Windows, use **MSYS2 UCRT64**. Do not use regular Command Prompt or
+PowerShell unless the MSYS2 toolchain has been added to PATH.
+
+1. Install MSYS2 from <https://www.msys2.org/>
+2. Open the **MSYS2 UCRT64** terminal
+3. Install GCC, Make, pkg-config, and Raylib:
+
+```bash
+pacman -Syu
+pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make mingw-w64-ucrt-x86_64-pkg-config mingw-w64-ucrt-x86_64-raylib
+```
+
+### Windows GUI version
+
+From the **MSYS2 UCRT64** terminal:
+
+```bash
+cd /c/Users/YourName/path/to/MiniProject/TrafficGUI
+mingw32-make
+./traffic_gui.exe
+```
+
+If `mingw32-make` is unavailable, try:
+
+```bash
+make
+```
+
+Common Windows errors:
+
+| Error | Fix |
+|-------|-----|
+| `raylib.h: No such file or directory` | Raylib is not installed, or the project is being built from the wrong terminal. Use **MSYS2 UCRT64** and install `mingw-w64-ucrt-x86_64-raylib`. |
+| `cannot find -lraylib` | Raylib is missing for the active compiler environment. Install the UCRT64 Raylib package above. |
+| `make: command not found` | Install `mingw-w64-ucrt-x86_64-make`, then run `mingw32-make`. |
+
 ### CLI version
+
+The CLI version does not need Raylib.
+
+macOS:
 
 ```bash
 cd DijkstraAlgorithm
 gcc -Wall -O2 -o traffic_analysis traffic_analysis.c
 ./traffic_analysis
+```
+
+Windows, from **MSYS2 UCRT64**:
+
+```bash
+cd /c/Users/YourName/path/to/MiniProject/DijkstraAlgorithm
+gcc -Wall -O2 -o traffic_analysis.exe traffic_analysis.c
+./traffic_analysis.exe
 ```
 
 ---
@@ -220,7 +270,7 @@ gcc -Wall -O2 -o traffic_analysis traffic_analysis.c
 | Language | C (C11 standard) |
 | GUI library | Raylib 5.5 |
 | Build system | GNU Make |
-| Platform | macOS (arm64 / x86_64) |
+| Platform | macOS (arm64 / x86_64), Windows via MSYS2 UCRT64 |
 
 ---
 
